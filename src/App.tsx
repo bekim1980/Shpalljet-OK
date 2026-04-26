@@ -22,7 +22,6 @@ import Install from "./pages/Install.tsx";
 import Analytics from "./pages/Analytics.tsx";
 import Insights from "./pages/Insights.tsx";
 import Pricing from "./pages/Pricing.tsx";
-import AIChatWidget from "@/components/ai/AIChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +53,6 @@ const App = () => (
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-                <AIChatWidget />
               </VerticalThemeWrapper>
             </BrowserRouter>
           </VerticalProvider>
