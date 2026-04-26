@@ -118,7 +118,6 @@ const Sell = () => {
       const now = new Date();
       const daysToAdd = draft.listingType === "paid" ? 30 : 7;
       const expiresAt = new Date(now.getTime() + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
-
       const insertData: any = {
         seller_id: user.id, title: draft.title.trim(), description: draft.description.trim(),
         price: parseFloat(draft.price) || 0, category: draft.category, category_id: draft.categoryId || null,
@@ -199,7 +198,6 @@ const Sell = () => {
                 <Textarea id="description" placeholder={v === "services" ? t("sell.placeholders.serviceDesc") : v === "rent" ? t("sell.placeholders.rentDesc") : t("sell.placeholders.luxeDesc")} className="pl-9 bg-secondary/50 min-h-[100px]" value={draft.description} onChange={(e) => updateDraft({ description: e.target.value })} maxLength={2000} />
               </div>
             </div>
-
             {(v === "luxe" || v === "market" || v === "rent") && (
               <div className={`grid gap-4 ${v === "rent" ? "grid-cols-3" : "grid-cols-2"}`}>
                 <div className="space-y-2">
@@ -330,16 +328,80 @@ const Sell = () => {
                 <Input id="city" placeholder={t("sell.cityPlaceholder")} className="bg-secondary/50" value={draft.city || ""} onChange={(e) => updateDraft({ city: e.target.value })} />
               </div>
             </div>
-
-            <div className="space-y-2">
+             <div className="space-y-2">
               <Label htmlFor="location">{t("sell.location")}</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input id="location" placeholder={t("sell.locationPlaceholder")} className="pl-9 bg-secondary/50" value={draft.location} onChange={(e) => updateDraft({ location: e.target.value })} />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label>{t("sell.contactMethod")}</Label>
               <div className="grid grid-cols-4 gap-2">
-        
+                {CONTACT_METHODS.map((cm) => {
+                  const Icon = contactIcons[cm.value];
+                  const selected = draft.contactMethod === cm.value;
+                  return (
+                    <button key={cm.value} type="button" onClick={() => updateDraft({ contactMethod: cm.value })}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-medium transition-all ${selected ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:border-primary/40"}`}>
+                      <Icon className="h-4 w-4" />{cm.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {(draft.contactMethod === "phone" || draft.contactMethod === "whatsapp" || draft.contactMethod === "viber") && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {t("sell.phoneFromProfile", "Numri i telefonit do të merret nga profili juaj. Sigurohuni që ta keni vendosur në faqen e Profilit.")}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">{t("sell.listingType")} *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => updateDraft({ listingType: "free" })}
+                  className={`p-4 rounded-xl border text-center transition-all ${
+                    draft.listingType === "free"
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <Clock className={`h-5 w-5 mx-auto mb-1.5 ${draft.listingType === "free" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-display font-bold block ${draft.listingType === "free" ? "text-primary" : "text-foreground"}`}>
+                    {t("sell.freeListing")}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground block mt-1">{t("sell.freeTag")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateDraft({ listingType: "paid" })}
+                  className={`p-4 rounded-xl border text-center transition-all ${
+                    draft.listingType === "paid"
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <Sparkles className={`h-5 w-5 mx-auto mb-1.5 ${draft.listingType === "paid" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className={`text-sm font-display font-bold block ${draft.listingType === "paid" ? "text-primary" : "text-foreground"}`}>
+                    {t("sell.paidListing")}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground block mt-1">{t("sell.paidTag")}</span>
+                </button>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground/60 text-center">{t("sell.draftAutoSaved")}</p>
+
+            <Button variant="gold" className="w-full" type="submit" disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Package className="h-4 w-4 mr-2" />{t("sell.publish")}</>}
+            </Button>
+          </form>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default Sell;
