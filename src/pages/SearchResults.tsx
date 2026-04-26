@@ -11,9 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, SearchX, Search, SlidersHorizontal, X, Sparkles, ArrowUp } from "lucide-react";
+import { Loader2, SearchX, Search, SlidersHorizontal, X, ArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import AISearchBar, { type ParsedFilters } from "@/components/ai/AISearchBar";
 import { Badge } from "@/components/ui/badge";
 import { Bell, BellOff, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,14 +38,11 @@ const SearchResults = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [sortBy, setSortBy] = useState<SortOption>("relevance");
   const [showFilters, setShowFilters] = useState(false);
-  const [aiInterpretation, setAiInterpretation] = useState<string>("");
-  const [aiOriginalQuery, setAiOriginalQuery] = useState<string>("");
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   const { data: categories } = useCategories();
   const { user } = useAuth();
 
-  // Show back-to-top after scrolling 600px
   useEffect(() => {
     const onScroll = () => setShowBackToTop(window.scrollY > 600);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -66,7 +62,6 @@ const SearchResults = () => {
 
   const { data: results, isLoading } = useSearchProducts(filters);
 
-  // Saved search controls
   const savedFilters = {
     query, category_id: categoryId || null, condition: condition || null,
     location: location || null,
@@ -100,18 +95,10 @@ const SearchResults = () => {
     toast.success(t("search.unsubscribed") || "Unsubscribed from this search");
   };
 
-  // Fallback: if AI-filtered search yields 0 results, retry keyword-only
-  const hasAiFilters = !!(condition || location || priceRange[0] > 0 || priceRange[1] < 100000);
-  const fallbackEnabled = !!aiInterpretation && !isLoading && results?.length === 0 && hasAiFilters;
-  const { data: fallbackResults } = useSearchProducts(
-    fallbackEnabled ? { query, sortBy: "relevance" } : { query: "" }
-  );
-  const finalResults = (results && results.length > 0) ? results : (fallbackEnabled ? fallbackResults : results);
-  const usedFallback = fallbackEnabled && (fallbackResults?.length ?? 0) > 0;
+  const finalResults = results;
 
   const hasActiveFilters = !!(categoryId || condition || location || priceRange[0] > 0 || priceRange[1] < 100000);
   const clearFilters = () => { setCategoryId(""); setCondition(""); setLocation(""); setPriceRange([0, 100000]); };
-  const clearAi = () => { setAiInterpretation(""); setAiOriginalQuery(""); clearFilters(); };
 
   const mapProduct = (p: any) => ({
     id: p.id, title: p.title, price: Number(p.price), image: p.image_urls?.[0] ?? "",
@@ -129,62 +116,6 @@ const SearchResults = () => {
       <Header />
       <div className="container py-8">
         <div className="max-w-2xl mx-auto mb-6 space-y-3">
-          <AISearchBar
-            defaultQuery={initialQuery}
-            onParsed={(f: ParsedFilters, raw?: string) => {
-              setQuery(f.cleaned_query || query);
-              if (f.condition) setCondition(f.condition);
-              if (f.location) setLocation(f.location);
-              if (typeof f.price_max === "number") setPriceRange(([min]) => [min, Math.max(f.price_max!, min)]);
-              if (typeof f.price_min === "number") setPriceRange(([, max]) => [f.price_min!, max]);
-              if (f.sort_by === "newest" || f.sort_by === "price-low" || f.sort_by === "price-high" || f.sort_by === "relevance") {
-                setSortBy(f.sort_by);
-              }
-              if (raw) setAiOriginalQuery(raw);
-              setAiInterpretation(f.explanation || f.cleaned_query || raw || "");
-            }}
-          />
-          <AnimatePresence>
-            {aiInterpretation && (
-              <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 flex items-start gap-2"
-              >
-                <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">
-                    {t("search.aiInterpretedPrefix")}{" "}
-                    <span className="text-foreground font-medium">{aiOriginalQuery || aiInterpretation}</span>
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {(priceRange[0] > 0 || priceRange[1] < 100000) && (
-                      <Badge variant="secondary" className="gap-1 text-[11px]">
-                        {formatPrice(priceRange[0], currency)}–{formatPrice(priceRange[1], currency)}
-                        <button onClick={() => setPriceRange([0, 100000])} aria-label="clear price"><X className="h-3 w-3" /></button>
-                      </Badge>
-                    )}
-                    {condition && (
-                      <Badge variant="secondary" className="gap-1 text-[11px]">
-                        {condition}
-                        <button onClick={() => setCondition("")} aria-label="clear condition"><X className="h-3 w-3" /></button>
-                      </Badge>
-                    )}
-                    {location && (
-                      <Badge variant="secondary" className="gap-1 text-[11px]">
-                        📍 {location}
-                        <button onClick={() => setLocation("")} aria-label="clear location"><X className="h-3 w-3" /></button>
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <button onClick={clearAi} className="text-muted-foreground hover:text-foreground" aria-label="dismiss">
-                  <X className="h-4 w-4" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -223,7 +154,6 @@ const SearchResults = () => {
             </motion.div>
           )}
         </div>
-        {/* Sticky filter / sort bar — keeps controls reachable while scrolling */}
         <div className="sticky top-14 z-30 -mx-4 sm:mx-0 px-4 sm:px-0 mb-5 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 border-b border-border/40 py-3 flex items-center justify-between">
           <h1 className="font-display text-base sm:text-xl font-bold truncate pr-2">{query ? t("search.resultsFor", { query }) : t("search.title")}</h1>
           <div className="flex items-center gap-3 shrink-0">
@@ -266,9 +196,6 @@ const SearchResults = () => {
             )}
           </div>
         )}
-        {usedFallback && (
-          <p className="text-xs text-muted-foreground mb-3 text-center">{t("search.fallbackUsed")}</p>
-        )}
         {isLoading && (<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>)}
         {!isLoading && finalResults && finalResults.length === 0 && (
           <div className="text-center py-16 space-y-4">
@@ -298,7 +225,6 @@ const SearchResults = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{finalResults?.map((p, i) => (<ProductCard key={p.id} product={mapProduct(p)} index={i} />))}</div>
       </div>
 
-      {/* Back-to-top FAB */}
       <AnimatePresence>
         {showBackToTop && (
           <motion.button
