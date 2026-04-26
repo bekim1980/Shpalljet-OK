@@ -339,15 +339,23 @@ const Sell = () => {
               <Label>{t("sell.contactMethod")}</Label>
               <div className="grid grid-cols-4 gap-2">
                 {CONTACT_METHODS.map((cm) => {
-                  const Icon = contactIcons[cm.value];
-                  const selected = draft.contactMethod === cm.value;
-                  return (
-                    <button key={cm.value} type="button" onClick={() => updateDraft({ contactMethod: cm.value })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-medium transition-all ${selected ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:border-primary/40"}`}>
-                      <Icon className="h-4 w-4" />{cm.label}
-                    </button>
-                  );
-                })}
+  const Icon = contactIcons[cm.value];
+  const selected = draft.contactMethod === cm.value;
+
+  return (
+    <button
+      key={cm.value}
+      type="button"
+      onClick={() => updateDraft({ contactMethod: cm.value })}
+      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border ${
+        selected ? "border-primary bg-primary/10" : "border-border"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{cm.label}</span>
+    </button>
+  );
+})}
               </div>
               {(draft.contactMethod === "phone" || draft.contactMethod === "whatsapp" || draft.contactMethod === "viber") && (
                 <p className="text-[11px] text-muted-foreground mt-1">
