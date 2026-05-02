@@ -52,8 +52,9 @@ const App = () => (
                   <Route path="/insights" element={<Insights />} />
                   <Route path="/pricing" element={<Pricing />} />
 
-                  {/* 🔥 THIS FIXES YOUR 404 */}
+                  {/* 🔥 FIX GOOGLE LOGIN REDIRECT */}
                   <Route path="/auth/callback" element={<Navigate to="/" replace />} />
+                  <Route path="/~oauth/init" element={<Navigate to="/" replace />} />
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>
