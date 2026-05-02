@@ -8,6 +8,7 @@ export interface ProductWithSeller {
   price: number;
   image_urls: string[];
   seller_id: string;
+  user_id?: string | null;
   category: string;
   description: string;
   condition: string;
@@ -24,6 +25,8 @@ export interface ProductWithSeller {
   expires_at: string | null;
   auto_renew: boolean;
   seller?: {
+    id?: string;
+    full_name?: string | null;
     display_name: string | null;
     avatar_url: string | null;
     phone_number?: string | null;
@@ -49,19 +52,36 @@ export const useProducts = (vertical?: Vertical) => {
       const { data: products, error } = await query;
 
       if (error) throw error;
+      if (!products || products.length === 0) return [];
 
-      // Fetch seller profiles
-      const sellerIds = [...new Set(products.map((p) => p.seller_id))];
+      const sellerIds = [
+        ...new Set(
+          products
+            .map((p) => p.seller_id || p.user_id)
+            .filter(Boolean)
+        ),
+      ];
+
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url")
-        .in("user_id", sellerIds);
+        .select("id, full_name, avatar_url")
+        .in("id", sellerIds);
 
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) ?? []);
+      const profileMap = new Map(
+        profiles?.map((p) => [
+          p.id,
+          {
+            id: p.id,
+            full_name: p.full_name,
+            display_name: p.full_name,
+            avatar_url: p.avatar_url,
+          },
+        ]) ?? []
+      );
 
       return products.map((p) => ({
         ...p,
-        seller: profileMap.get(p.seller_id) ?? undefined,
+        seller: profileMap.get(p.seller_id || p.user_id) ?? undefined,
       }));
     },
   });
@@ -73,27 +93,52 @@ export const useProduct = (id: string | undefined) => {
     enabled: !!id,
     queryFn: async (): Promise<ProductWithSeller | null> => {
       if (!id) return null;
+
       const { data, error } = await supabase
         .from("products")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) return null;
+      if (error || !data) return null;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, avatar_url, phone_number, whatsapp_enabled, viber_enabled")
-        .eq("user_id", data.seller_id)
-        .single();
+      const sellerId = data.seller_id || data.user_id;
 
-      return { ...data, seller: profile ?? undefined };
+      let seller = undefined;
+
+      if (sellerId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .eq("id", sellerId)
+          .maybeSingle();
+
+        if (profile) {
+          seller = {
+            id: profile.id,
+            full_name: profile.full_name,
+            display_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+          };
+        }
+      }
+
+      return { ...data, seller };
     },
   });
 };
 
 export const categories = [
-  "All", "Watches", "Bags", "Books", "Audio", "Photography", "Furniture", "Art", "Jewelry", "Other",
+  "All",
+  "Watches",
+  "Bags",
+  "Books",
+  "Audio",
+  "Photography",
+  "Furniture",
+  "Art",
+  "Jewelry",
+  "Other",
 ];
 
 export const categoryLabels: Record<string, string> = {
