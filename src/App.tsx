@@ -52,9 +52,10 @@ const App = () => (
                   <Route path="/insights" element={<Insights />} />
                   <Route path="/pricing" element={<Pricing />} />
 
-                  {/* 🔥 FIX GOOGLE LOGIN REDIRECT */}
+                  {/* 🔥 GOOGLE OAUTH FIX (ALL CASES) */}
                   <Route path="/auth/callback" element={<Navigate to="/" replace />} />
                   <Route path="/~oauth/init" element={<Navigate to="/" replace />} />
+                  <Route path="/~oauth/initiate" element={<Navigate to="/" replace />} />
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>
