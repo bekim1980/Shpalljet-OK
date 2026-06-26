@@ -1,0 +1,10 @@
+project_id = "xbignrigchholsrbnvhl"
+
+[functions.ai-assistant]
+verify_jwt = false
+
+[functions.expire-listings]
+verify_jwt = false
+
+[functions.saved-search-runner]
+verify_jwt = false
